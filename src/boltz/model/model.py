@@ -123,9 +123,6 @@ class Boltz1(LightningModule):
             "resolved_loss",
             "pde_loss",
             "pae_loss",
-            "rel_plddt_loss",
-            "rel_pde_loss",
-            "rel_pae_loss",
         ]:
             self.train_confidence_loss_dict_logger[m] = MeanMetric()
 
@@ -1198,10 +1195,11 @@ class Boltz1(LightningModule):
             checkpoint["ema"] = self.ema.state_dict()
 
     def on_load_checkpoint(self, checkpoint: dict[str, Any]) -> None:
-        if self.use_ema and self.ema is None:
+        if self.use_ema and "ema" in checkpoint and self.ema.compatible(checkpoint["ema"]["shadow_params"]):
             self.ema = ExponentialMovingAverage(
                 parameters=self.parameters(), decay=self.ema_decay
             )
+            self.ema.load_state_dict(checkpoint["ema"], device=torch.device("cpu"))
 
     def on_train_start(self):
         if self.use_ema and self.ema is None:
