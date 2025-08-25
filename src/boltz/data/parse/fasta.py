@@ -8,7 +8,12 @@ from boltz.data.parse.yaml import parse_boltz_schema
 from boltz.data.types import Target
 
 
-def parse_fasta(path: Path, ccd: Mapping[str, Mol]) -> Target:  # noqa: C901
+def parse_fasta(  # noqa: C901, PLR0912
+    path: Path,
+    ccd: Mapping[str, Mol],
+    mol_dir: Path,
+    boltz2: bool = False,
+) -> Target:
     """Parse a fasta file.
 
     The name of the fasta file is used as the name of this job.
@@ -29,6 +34,10 @@ def parse_fasta(path: Path, ccd: Mapping[str, Mol]) -> Target:  # noqa: C901
         Path to the fasta file.
     ccd : Dict
         Dictionary of CCD components.
+    mol_dir : Path
+        Path to the directory containing the molecules.
+    boltz2 : bool
+        Whether to parse the input for Boltz2.
 
     Returns
     -------
@@ -67,9 +76,9 @@ def parse_fasta(path: Path, ccd: Mapping[str, Mol]) -> Target:  # noqa: C901
         header = seq_record.id.split("|")
         chain_id, entity_type = header[:2]
         if len(header) == 3 and header[2] != "":
-            assert (
-                entity_type.lower() == "protein"
-            ), "MSA_ID is only allowed for proteins"
+            assert entity_type.lower() == "protein", (
+                "MSA_ID is only allowed for proteins"
+            )
             msa_id = header[2]
         else:
             msa_id = None
@@ -126,4 +135,4 @@ def parse_fasta(path: Path, ccd: Mapping[str, Mol]) -> Target:  # noqa: C901
     }
 
     name = path.stem
-    return parse_boltz_schema(name, data, ccd)
+    return parse_boltz_schema(name, data, ccd, mol_dir, boltz2)
